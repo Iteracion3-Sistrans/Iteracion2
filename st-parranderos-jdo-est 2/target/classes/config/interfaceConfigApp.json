@@ -1,0 +1,29 @@
+{
+	"title": "Aplicación transaccional de Parranderos Uniandes",
+	"frameH": 600,
+	"frameW": 800,
+	"bannerPath": "./src/main/resources/config/logo.png",
+	"menuBar":
+	[
+		{ "menuTitle": "RF7",
+		  "options":
+			[
+				{
+					"label": "Registrar Reserva Alojamiento",
+					"event": "registrarReservaAlojamiento"
+				}
+			]
+		},
+		{ "menuTitle": "RF9",
+		  "options":
+			[
+				{
+					"label": "Registrar Llegada Cliente",
+					"event": "registrarLlegadaCliente"
+				}
+			]
+		}
+
+	]
+}
+	
