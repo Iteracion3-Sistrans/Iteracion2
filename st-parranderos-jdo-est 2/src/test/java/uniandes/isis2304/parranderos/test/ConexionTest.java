@@ -4,7 +4,7 @@
  * Licenciado	bajo	el	esquema	Academic Free License versión 2.1
  * 		
  * Curso: isis2304 - Sistemas Transaccionales
- * Proyecto: Parranderos Uniandes
+ * Proyecto: HotelAndes Uniandes
  * @version 1.0
  * @author Germán Bravo
  * Julio de 2018
@@ -28,8 +28,7 @@ import org.junit.Test;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonReader;
-import uniandes.isis2304.parranderos.negocio.Parranderos;
-import uniandes.isis2304.parranderos.negocio.VOTipoBebida;
+import uniandes.isis2304.hotelAndes.negocio.HotelAndes;
 
 /**
  * Clase con métodos de prueba de conexión a la base de datos
@@ -77,7 +76,7 @@ public class ConexionTest
 	/**
 	 * La clase que se quiere probar
 	 */
-    private Parranderos parranderos;
+    private HotelAndes hotelAndes;
 	
 	/* ****************************************************************
 	 * 			Métodos de prueba de acceso a la BD
@@ -91,11 +90,11 @@ public class ConexionTest
   	  	try
 		{
 			log.info ("Probando el acceso a la base de datos con datos válidos (BD, credenciales, esquema");
-			parranderos = new Parranderos (openConfig (CONFIG_TABLAS_A));
+			hotelAndes = new HotelAndes (openConfig (CONFIG_TABLAS_A));
 			log.info ("Conexión realizada correstamente");
 			log.info ("Cerrando la conexión");
 			
-			parranderos.cerrarUnidadPersistencia ();
+			hotelAndes.cerrarUnidadPersistencia ();
 			log.info ("Conexión cerrada");
 		}
 		catch (Exception e)
@@ -105,7 +104,7 @@ public class ConexionTest
 			log.info ("La causa es: " + e.getCause ().toString ());
 
 			String msg = "Prueba de acceso normal a la base de datos falló !! Revise persistence.xml.\n";
-			msg += "Revise el log de parranderos y el de datanucleus para conocer el detalle de la excepción";
+			msg += "Revise el log de hotelAndes y el de datanucleus para conocer el detalle de la excepción";
 //			System.out.println (msg);
 			fail (msg);
 		}
@@ -122,7 +121,7 @@ public class ConexionTest
 		try
 		{
 	    	log.info ("Probando el acceso a la base de datos con una base de datos que no existe");
-			parranderos = new Parranderos (openConfig (CONFIG_TABLAS_ERR_DS));
+			hotelAndes = new HotelAndes (openConfig (CONFIG_TABLAS_ERR_DS));
 			fail ("Debería fallar. La base de datos no existe !!");
 		}
 		catch (Exception e)
@@ -132,7 +131,7 @@ public class ConexionTest
 			log.info ("La causa es: " + e.getCause ().toString ());
 
 			String msg = "Prueba de base de datos inaccesible correcta.\n";
-			msg += "Revise el log de parranderos y el de datanucleus para conocer el detalle de la excepción";
+			msg += "Revise el log de hotelAndes y el de datanucleus para conocer el detalle de la excepción";
 			System.out.println (msg);
 		}
     }
@@ -147,7 +146,7 @@ public class ConexionTest
 		try
 		{
 	    	log.info ("Probando el acceso a la base de datos con datos de usuario incorrectos");
-			parranderos = new Parranderos (openConfig (CONFIG_TABLAS_ERR_USER));
+			hotelAndes = new HotelAndes (openConfig (CONFIG_TABLAS_ERR_USER));
 			fail ("Debería fallar. Las credenciales del usuario no son válidas");
 		}
 		catch (Exception e)
@@ -157,7 +156,7 @@ public class ConexionTest
 			log.info ("La causa es: " + e.getCause ().toString ());
 
 			String msg = "Prueba de credenciales incorrectas correcta.\n";
-			msg += "Revise el log de parranderos y el de datanucleus para conocer el detalle de la excepción";
+			msg += "Revise el log de hotelAndes y el de datanucleus para conocer el detalle de la excepción";
 			System.out.println (msg);
 		}
     }
@@ -173,7 +172,7 @@ public class ConexionTest
 		try
 		{
 	    	log.info ("Probando el acceso a la base de datos con datos de usuario correctos, pero sin crear el esquema");
-			parranderos = new Parranderos (openConfig (CONFIG_TABLAS_B));
+			hotelAndes = new HotelAndes (openConfig (CONFIG_TABLAS_B));
 		}
 		catch (Exception e)
 		{
@@ -182,7 +181,7 @@ public class ConexionTest
 			log.info ("La causa es: " + e.getCause ().toString ());
 
 			String msg = "Prueba de tabla inexistente incompleta. No se pudo conectar a la base de datos !!.\n";
-			msg += "Revise el log de parranderos y el de datanucleus para conocer el detalle de la excepción";
+			msg += "Revise el log de hotelAndes y el de datanucleus para conocer el detalle de la excepción";
 			System.out.println (msg);
 			fail (msg);
 		}
@@ -199,13 +198,14 @@ public class ConexionTest
 			log.info ("La causa es: " + e.getCause ().toString ());
 
 			String msg = "Prueba de tabla inexistente correcta.\n";
-			msg += "Revise el log de parranderos y el de datanucleus para conocer el detalle de la excepción";
+			msg += "Revise el log de hotelAndes y el de datanucleus para conocer el detalle de la excepción";
 			System.out.println (msg);
 		}
 		finally
 		{
-			parranderos.limpiarParranderos ();
-    		parranderos.cerrarUnidadPersistencia ();    		
+			//TODO: Corregir 
+			//hotelAndes.limpiarParranderos ();
+    		hotelAndes.cerrarUnidadPersistencia ();    		
 		}
     }
 
