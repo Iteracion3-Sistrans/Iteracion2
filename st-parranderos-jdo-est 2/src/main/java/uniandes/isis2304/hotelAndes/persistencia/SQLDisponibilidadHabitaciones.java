@@ -14,6 +14,7 @@ package uniandes.isis2304.hotelAndes.persistencia;
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
+import java.sql.Timestamp;
 import java.util.List;
 
 import javax.jdo.PersistenceManager;
@@ -65,11 +66,11 @@ public class SQLDisponibilidadHabitaciones {
 	 * @param nombre - El nombre del tipo de bebida
 	 * @return EL número de tuplas insertadas
 	 */
-	public List<DisponibilidadHabitaciones> darDisponibilidadHabitaciones(PersistenceManager pm, int idHabitacion) 
+	public List<DisponibilidadHabitaciones> darDisponibilidadHabitaciones(PersistenceManager pm, int idHabitacion, Timestamp fechaInicio) 
 	{
         String idHabit = Integer.toString(idHabitacion);
-        Query q = pm.newQuery(SQL, "SELECT * FROM " + pp.darTablaDisponibilidadHabitaciones() + " WHERE FECHA_DISPONIBLE IS NULL AND ID_SERVICIO_TIPO_HABITACION = ? ");
-        q.setParameters(idHabit);
+        Query q = pm.newQuery(SQL, "SELECT * FROM " + pp.darTablaDisponibilidadHabitaciones() + " WHERE (FECHA_DISPONIBLE IS NULL OR FECHA_DISPONIBLE <= ?) AND ID_SERVICIO_TIPO_HABITACION = ? ");
+        q.setParameters(fechaInicio, idHabitacion);
 		q.setResultClass(DisponibilidadHabitaciones.class);
         return (List<DisponibilidadHabitaciones>) q.executeList();            
 	}    

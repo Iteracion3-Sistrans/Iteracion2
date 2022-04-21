@@ -17,6 +17,7 @@ package uniandes.isis2304.hotelAndes.persistencia;
 
 
 import java.math.BigDecimal;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.LinkedList;
 import java.util.List;
@@ -478,9 +479,9 @@ public class PersistenciaHotelAndes
 	 ******************************************************/
 
 
-    public List<DisponibilidadHabitaciones> darDisponibilidadHabitaciones(int tipoHabitacion)
+    public List<DisponibilidadHabitaciones> darDisponibilidadHabitaciones(int tipoHabitacion, Timestamp fechaInicio)
 	{
-		return sqlDisponibilidadHabitaciones.darDisponibilidadHabitaciones(pmf.getPersistenceManager(), tipoHabitacion);
+		return sqlDisponibilidadHabitaciones.darDisponibilidadHabitaciones(pmf.getPersistenceManager(), tipoHabitacion, fechaInicio);
 	}
     
 }

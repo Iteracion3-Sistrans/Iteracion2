@@ -141,11 +141,11 @@ public class HotelAndes
 	  * 			Métodos para manejar las HABITACIONES 
 	  ****************************************************************/
 
-	public List <VODisponibilidadHabitaciones> darVODisponibilidadHabitaciones (int tipHabitacion)
+	public List <VODisponibilidadHabitaciones> darVODisponibilidadHabitaciones (int tipHabitacion, Timestamp fechaInicio)
 	{
 		log.info ("Generando los VO de Disponibilidad Habitaciones");        
         List<VODisponibilidadHabitaciones> voTipos = new LinkedList<> ();
-        for (DisponibilidadHabitaciones tb : pp.darDisponibilidadHabitaciones(tipHabitacion))
+        for (DisponibilidadHabitaciones tb : pp.darDisponibilidadHabitaciones(tipHabitacion, fechaInicio))
 		{
 			voTipos.add (tb);
 		}
@@ -153,9 +153,9 @@ public class HotelAndes
         return voTipos;
 	}	
 
-	public BigDecimal darDisponibilidadHabitaciones (int tipHabitacion)
+	public BigDecimal darDisponibilidadHabitaciones (int tipHabitacion, Timestamp fechaInicio)
 	{
-		return pp.darDisponibilidadHabitaciones (tipHabitacion).get(0).getNumeroHabitacion();
+		return pp.darDisponibilidadHabitaciones (tipHabitacion, fechaInicio).get(0).getNumeroHabitacion();
 	} 
 
 	/* ****************************************************************

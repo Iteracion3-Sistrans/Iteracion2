@@ -266,6 +266,8 @@ public class InterfazParranderosApp extends JFrame implements ActionListener
 			String fechaInicio = JOptionPane.showInputDialog("Ingrese la fecha de inicio de la reserva (ej: 2022-07-03)");
 
 			String fechaFin = JOptionPane.showInputDialog("Ingrese la fecha de fin de la reserva (ej: 2022-07-20)");
+			Timestamp fechaInicioTimestamp = Timestamp.valueOf(fechaInicio + " 00:00:00");
+			Timestamp fechaFinTimestamp = Timestamp.valueOf(fechaFin + " 00:00:00");
 
 			Object[] options2 = {"1.Simple", "2.Doble", "3.Triple", "4.Cuadruple","5.Suite","6.Suite Premium", "7.Suite Luxury", "8.Suite Superior", "9.Suite Superior Luxury", "10.Suite Superior Premium"};
 			Object selectionObject2 = JOptionPane.showInputDialog(null, "Seleccione el tipo de habitacion", "Menu", JOptionPane.PLAIN_MESSAGE, null, options2, options2[0]);
@@ -294,19 +296,18 @@ public class InterfazParranderosApp extends JFrame implements ActionListener
 					resultado += "\nSe pudo crear al cliente " + tb2;
 					panelDatos.actualizarInterfaz(resultado);
 					//Validar disponibilidad habitaciones	
-					List <VODisponibilidadHabitaciones> disponibilidad = hotelAndes.darVODisponibilidadHabitaciones(tipHabitacion);
+					List <VODisponibilidadHabitaciones> disponibilidad = hotelAndes.darVODisponibilidadHabitaciones(tipHabitacion, fechaInicioTimestamp);
 					if (disponibilidad.size() == 0)
 					{
 						throw new Exception("No hay disponibilidad para el tipo de habitacion seleccionado");
 					}
+
 					String result2 = "Hay disponibilidad para las siguientes habitaciones" + disponibilidad;
 					panelDatos.actualizarInterfaz(result2);
-					BigDecimal habitacion = hotelAndes.darDisponibilidadHabitaciones(tipHabitacion);
+					BigDecimal habitacion = hotelAndes.darDisponibilidadHabitaciones(tipHabitacion, fechaInicioTimestamp);
 					panelDatos.actualizarInterfaz("Se asignó la habitación" + habitacion);	
 
 					//Agregar la reserva a la base de datos
-					Timestamp fechaInicioTimestamp = Timestamp.valueOf(fechaInicio + " 00:00:00");
-					Timestamp fechaFinTimestamp = Timestamp.valueOf(fechaFin + " 00:00:00");
 					BigDecimal numPersonas = new BigDecimal(cantPersonasInt);
 					String planPago = "Preferencial";
 					BigDecimal idServicioHab = new BigDecimal(tipHabitacion);
