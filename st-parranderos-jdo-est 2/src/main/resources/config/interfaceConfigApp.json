@@ -22,6 +22,15 @@
 					"event": "registrarLlegadaCliente"
 				}
 			]
+		},
+		{ "menuTitle": "RF12",
+		  "options":
+		  [
+		  	{
+		  		"label": "Reservar Servicios Convencion",
+		  		"event": "reservarServiciosConvencion"
+		  	}
+		  ]
 		}
 
 	]

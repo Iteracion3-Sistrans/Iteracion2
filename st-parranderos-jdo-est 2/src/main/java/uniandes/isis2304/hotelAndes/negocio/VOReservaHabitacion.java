@@ -14,6 +14,7 @@ public interface VOReservaHabitacion {
     public BigDecimal getIdServicioHab();
     public String getRecepTipoDoc();
     public String getRecepNumDo();
+    public BigDecimal getNumeroCuenta();
     
     public void setId(BigDecimal id);
     public void setFechaInicioTimestamp(Timestamp fechaInicioTimestamp);
@@ -24,5 +25,6 @@ public interface VOReservaHabitacion {
     public void setIdServicioHab(BigDecimal idServicioHab);
     public void setRecepTipoDoc(String recepTipoDoc);
     public void setRecepNumDo(String recepNumDo);
+    public void setNumeroCuenta(BigDecimal numeroCuenta);
     
 }

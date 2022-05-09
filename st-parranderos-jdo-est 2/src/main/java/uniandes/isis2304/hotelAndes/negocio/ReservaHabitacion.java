@@ -23,12 +23,13 @@ public class ReservaHabitacion implements VOReservaHabitacion{
     private BigDecimal id;
     private Timestamp fechaInicioTimestamp;
     private Timestamp fechaFinTimestamp;
-    BigDecimal numPersonas;
-    String planPago; 
-    BigDecimal habitacion;
-    BigDecimal idServicioHab;
-    String recepTipoDoc;
-    String recepNumDo;
+    private BigDecimal numPersonas;
+    private String planPago; 
+    private BigDecimal habitacion;
+    private BigDecimal idServicioHab;
+    private String recepTipoDoc;
+    private String recepNumDo;
+    private BigDecimal numeroCuenta;
     
    public ReservaHabitacion()
    {
@@ -41,10 +42,12 @@ public class ReservaHabitacion implements VOReservaHabitacion{
          this.idServicioHab = new BigDecimal(0);
          this.recepTipoDoc = "";
          this.recepNumDo = "";
+         this.numeroCuenta = new BigDecimal(0);
    } 
    
-   public ReservaHabitacion (BigDecimal id,Timestamp fechaInicioTimestamp, Timestamp fechaFinTimestamp, BigDecimal numPersonas, String planPago, BigDecimal habitacion, BigDecimal idServicioHab, String recepTipoDoc, String recepNumDo)
+   public ReservaHabitacion (BigDecimal id, Timestamp fechaInicioTimestamp, Timestamp fechaFinTimestamp, BigDecimal numPersonas, String planPago, BigDecimal habitacion, BigDecimal idServicioHab, String recepTipoDoc, String recepNumDo, BigDecimal numeroCuenta)
    {
+
        this.id = id; 
        this.fechaInicioTimestamp = fechaInicioTimestamp;
        this.fechaFinTimestamp = fechaFinTimestamp;
@@ -54,12 +57,14 @@ public class ReservaHabitacion implements VOReservaHabitacion{
        this.idServicioHab = idServicioHab;
        this.recepTipoDoc = recepTipoDoc;
        this.recepNumDo = recepNumDo;
+       this.numeroCuenta = numeroCuenta;
+
    }
 
    //Getters y setters
 
     public Timestamp getFechaInicioTimestamp() {
-        return fechaInicioTimestamp;
+        return this.fechaInicioTimestamp;
     }
 
     public void setFechaInicioTimestamp(Timestamp fechaInicioTimestamp) {
@@ -129,8 +134,14 @@ public class ReservaHabitacion implements VOReservaHabitacion{
     public void setId(BigDecimal id) {
         this.id = id;
     }
-
-
+    
+    public BigDecimal getNumeroCuenta() {
+        return numeroCuenta;
+    }
+    
+    public void setNumeroCuenta(BigDecimal numeroCuenta) {
+        this.numeroCuenta = numeroCuenta;
+    }
 
     //toString
     @Override
