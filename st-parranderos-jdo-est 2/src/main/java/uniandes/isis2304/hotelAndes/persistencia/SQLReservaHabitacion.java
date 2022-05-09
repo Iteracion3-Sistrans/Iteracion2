@@ -19,6 +19,8 @@ import java.sql.Timestamp;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
+import uniandes.isis2304.hotelAndes.negocio.ReservaHabitacion;
+
 /**
  * Clase que encapsula los métodos que hacen acceso a la base de datos para el concepto TIPO DE BEBIDA de HotelAndes
  * Nótese que es una clase que es sólo conocida en el paquete de persistencia
@@ -63,12 +65,18 @@ public class SQLReservaHabitacion {
 	 * @param nombre - El nombre del tipo de bebida
 	 * @return EL número de tuplas insertadas
 	 */
-	public long adicionarReserva(PersistenceManager pm, BigDecimal id,Timestamp fechaInicioTimestamp, Timestamp fechaFinTimestamp, BigDecimal numPersonas, String planPago, BigDecimal habitacion, BigDecimal idServicioHab, String recepTipoDoc, String recepNumDoc) 
+	public long adicionarReserva(PersistenceManager pm, BigDecimal id ,Timestamp fechaInicioTimestamp, Timestamp fechaFinTimestamp, BigDecimal numPersonas, String planPago, BigDecimal habitacion, BigDecimal idServicioHab, String recepTipoDoc, String recepNumDoc) 
 	{
-        Query q = pm.newQuery(SQL, "INSERT INTO " + pp.darTablaReservasHabitaciones() + " (ID, FECHA_ENTRADA, FECHA_SALIDA, NUM_PERSONAS, PLAN_PAGO, NUMERO_HABITACION, ID_SERVICIO_TIPO_HABITACION, RECEPCIONISTA_TIPO_DOC, RECEPCIONISTA_NUM_DOC, NUMERO_CUENTA) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        q.setParameters(id, fechaInicioTimestamp, fechaFinTimestamp, numPersonas, planPago, habitacion, idServicioHab, recepTipoDoc, recepNumDoc, null);
-        return (long) q.executeUnique();            
+        Query q = pm.newQuery(SQL, "INSERT INTO " + pp.darTablaReservasHabitaciones() + " (ID, FECHA_ENTRADA, FECHA_SALIDA, NUM_PERSONAS, PLAN_PAGO, NUMERO_HABITACION, ID_SERVICIO_TIPO_HABITACION, RECEPCIONISTA_TIPO_DOC, RECEPCIONISTA_NUM_DOC, NUMERO_CUENTA) values (?,?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        q.setParameters(id,fechaInicioTimestamp, fechaFinTimestamp, numPersonas, planPago, habitacion, idServicioHab, recepTipoDoc, recepNumDoc, null);
+        long tuplas = (long) q.executeUnique();            
+		return tuplas;
 	}  
+	
+	public long adicionarReserva(PersistenceManager pm, ReservaHabitacion reserva)
+	{
+		return adicionarReserva(pm, reserva.getId() ,reserva.getFechaInicioTimestamp(), reserva.getFechaFinTimestamp(), reserva.getNumPersonas(), reserva.getPlanPago(), reserva.getHabitacion(), reserva.getIdServicioHab(), reserva.getRecepTipoDoc(), reserva.getRecepNumDo());
+	}
     
     public long abrirCuentaReserva (PersistenceManager pm, BigDecimal id, BigDecimal numeroCuenta)
     {

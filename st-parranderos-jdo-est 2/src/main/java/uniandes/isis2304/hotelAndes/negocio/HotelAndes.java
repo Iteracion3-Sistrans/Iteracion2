@@ -17,6 +17,7 @@ package uniandes.isis2304.hotelAndes.negocio;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -76,6 +77,28 @@ public class HotelAndes
 		pp.cerrarUnidadPersistencia ();
 	}
 
+
+	/* ****************************************************************
+	 * 			Métodos para manejar las CONVENCIONES
+	 * ****************************************************************/
+	
+	
+	public long reservarConvencion(ArrayList<ReservaHabitacion> reservas, ClienteGeneral cGeneral, ClienteEmail cEmail)
+	{
+		
+		long ans =  pp.reservarHabitacionesTransac(reservas, cGeneral, cEmail);
+		
+		if (ans == 0)
+		{
+			log.info ("Reserva de habitaciones fallida");
+		}
+		else{
+			log.info ("Reserva de habitaciones exitosa");
+		}
+		
+		return ans;
+			
+	}
 	
 	/* ****************************************************************
 	 * 			Métodos para manejar los CLIENTES
@@ -105,13 +128,13 @@ public class HotelAndes
 	 * 			Métodos para manejar las RESERVAS
 	 *  *****************************************************************/
 
-	public ReservaHabitacion adicionarReserva(Timestamp fechaInicioTimestamp, Timestamp fechaFinTimestamp, BigDecimal numPersonas, String planPago, BigDecimal habitacion, BigDecimal idServicioHab, String recepTipoDoc, String recepNumDoc)
-	{
-		log.info("Adicionando reserva " + fechaInicioTimestamp + " " + fechaFinTimestamp + " " + numPersonas + " " + planPago + " " + habitacion + " " + idServicioHab + " " + recepTipoDoc + " " + recepNumDoc);	
-		ReservaHabitacion reseva = pp.adicionarReserva(fechaInicioTimestamp, fechaFinTimestamp, numPersonas, planPago, habitacion, idServicioHab, recepTipoDoc, recepNumDoc);
-		log.info("Reserva adicionada");
-		return reseva;
-	}
+	// public long adicionarReserva(Timestamp fechaInicioTimestamp, Timestamp fechaFinTimestamp, BigDecimal numPersonas, String planPago, BigDecimal habitacion, BigDecimal idServicioHab, String recepTipoDoc, String recepNumDoc)
+	// {
+	// 	log.info("Adicionando reserva " + fechaInicioTimestamp + " " + fechaFinTimestamp + " " + numPersonas + " " + planPago + " " + habitacion + " " + idServicioHab + " " + recepTipoDoc + " " + recepNumDoc);	
+	// 	long reseva = pp.adicionarReserva(fechaInicioTimestamp, fechaFinTimestamp, numPersonas, planPago, habitacion, idServicioHab, recepTipoDoc, recepNumDoc);
+	// 	log.info("Reserva adicionada");
+	// 	return reseva;
+	// }
 
 	public Cuenta adicionarCuenta()
 	{
@@ -137,6 +160,16 @@ public class HotelAndes
 		return reserva;
 	}
 
+    public ReservaCliente asociarClienteReserva(String tipo_doc, String num_doc, BigDecimal id_reserva)
+	{
+		
+		log.info("Asociando cliente a reserva " + tipo_doc + " " + num_doc + " " + id_reserva);
+		ReservaCliente reserva = pp.asociarClienteReserva(tipo_doc, num_doc, id_reserva);
+		log.info("Cliente asociado");
+		return reserva;
+
+    } 
+
 	 /*****************************************************************
 	  * 			Métodos para manejar las HABITACIONES 
 	  ****************************************************************/
@@ -156,7 +189,7 @@ public class HotelAndes
 	public BigDecimal darDisponibilidadHabitaciones (int tipHabitacion, Timestamp fechaInicio)
 	{
 		return pp.darDisponibilidadHabitaciones (tipHabitacion, fechaInicio).get(0).getNumeroHabitacion();
-	} 
+	}
 
 	/* ****************************************************************
 	 * 			Métodos para administración

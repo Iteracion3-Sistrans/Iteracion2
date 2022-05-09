@@ -19,6 +19,7 @@ package uniandes.isis2304.hotelAndes.persistencia;
 import java.math.BigDecimal;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -26,6 +27,7 @@ import javax.jdo.JDODataStoreException;
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManager;
 import javax.jdo.PersistenceManagerFactory;
+import javax.jdo.Query;
 import javax.jdo.Transaction;
 
 import org.apache.log4j.Logger;
@@ -36,6 +38,7 @@ import uniandes.isis2304.hotelAndes.negocio.ClienteEmail;
 import uniandes.isis2304.hotelAndes.negocio.ClienteGeneral;
 import uniandes.isis2304.hotelAndes.negocio.Cuenta;
 import uniandes.isis2304.hotelAndes.negocio.DisponibilidadHabitaciones;
+import uniandes.isis2304.hotelAndes.negocio.ReservaCliente;
 import uniandes.isis2304.hotelAndes.negocio.ReservaHabitacion;
 
 /**
@@ -85,6 +88,8 @@ public class PersistenciaHotelAndes
 	/**
 	 * Atributo para el acceso a las sentencias SQL propias a PersistenciaHotelAndes
 	 */
+	
+	private SQLReservaCliente sqlReservaCliente;
 	private SQLUtil sqlUtil;
 	
 	private SQLClienteGeneral sqlClienteGeneral;
@@ -193,6 +198,7 @@ public class PersistenciaHotelAndes
 	 */
 	private void crearClasesSQL ()
 	{
+		sqlReservaCliente = new SQLReservaCliente(this);
 		sqlCuentas = new SQLCuenta (this);
 		sqlReservaHabitacion = new SQLReservaHabitacion(this);
 		sqlDisponibilidadHabitaciones = new SQLDisponibilidadHabitaciones(this);
@@ -217,6 +223,11 @@ public class PersistenciaHotelAndes
 	public String darTablaReservasHabitaciones()
 	{
 		return tablas.get(45);
+	}
+
+	public String darTablaReservasClientes()
+	{
+		return tablas.get(44);
 	}
 	/**
 	 * @return La cadena de caracteres con el nombre de la tabla de TipoBebida de parranderos
@@ -312,6 +323,78 @@ public class PersistenciaHotelAndes
 		return resp;
 	}
 
+	/***************************
+	 *  METODO PARA MANEJAR CONVENCIONES
+	 **************************/
+
+
+	public long reservarHabitacionesTransac(ArrayList<ReservaHabitacion> reservas, ClienteGeneral cGeneral, ClienteEmail cEmail)	
+	{
+		long ans = 0;
+		PersistenceManager pm = pmf.getPersistenceManager();
+		
+		Transaction tx = pm.currentTransaction();
+		tx.setIsolationLevel("serializable");
+		try
+		{
+			
+			tx.begin();
+
+			//Crear al representante legal
+			sqlClienteGeneral.adicionarClienteGeneral(pm, cGeneral.getNombre(), cGeneral.getTipoDocumento(), cGeneral.getNumeroDocumento());
+			sqlClienteEmail.adicionarClienteEmail(pm, cEmail.getTipoDocumento(), cEmail.getNumeroDocumento(),cEmail.getEmail());
+			
+			//Crear la cuenta de la convención
+			
+			Query q2 = pm.newQuery(SQL, "SELECT numero_cuenta_sequence.nextval FROM DUAL");
+			q2.setResultClass(Long.class);
+			long resp = (long) q2.executeUnique();
+			
+			BigDecimal numCuenta = new BigDecimal(resp);
+
+			sqlCuentas.adicionarCuenta(pm, numCuenta, new BigDecimal(0));
+
+			for (ReservaHabitacion reserva : reservas)
+			{
+				//Recuperar el id de la reserva
+				Query q3 = pm.newQuery(SQL, "SELECT reservas_habitaciones_id_sequence.nextval FROM DUAL");
+				q3.setResultClass(Long.class);
+				long resp2 = (long) q3.executeUnique();
+				BigDecimal numReserva = new BigDecimal(resp2);
+				//Asociar a la cuenta	
+				reserva.setNumeroCuenta(numCuenta);
+				reserva.setId(numReserva);
+				//Adicionar la reserva
+				//Asociarle el cliente
+				long reservaHabit = sqlReservaHabitacion.adicionarReserva(pm, reserva);
+				sqlReservaCliente.asociarClienteReserva(pm, cGeneral.getTipoDocumento(), cGeneral.getNumeroDocumento(), numReserva );
+				
+				//Agregar a la lista de respuesta
+				ans += reservaHabit;
+			}
+			
+			tx.commit();
+
+			return ans;
+		}
+		catch (Exception e)
+		{
+			log.error ("Exception : " + e.getMessage() + "\n" + darDetalleException(e));
+			tx.rollback();
+			return 0;
+
+		}
+		finally
+		{
+			if (tx.isActive())
+			{
+				tx.rollback();
+			}
+			pm.close();
+		}
+
+	}
+
 	/*****************
 	 * 
 	 * METODOS PARA MANEJAR LOS CLIENTES
@@ -382,36 +465,36 @@ public class PersistenciaHotelAndes
 	 * METODOS PARA MANEJAR LAS RESERVAS
 	 ***********************************/
 
-	public ReservaHabitacion adicionarReserva(Timestamp fechaInicioTimestamp, Timestamp fechaFinTimestamp, BigDecimal numPersonas, String planPago, BigDecimal habitacion, BigDecimal idServicioHab, String recepTipoDoc, String recepNumDoc)
-	{
-		PersistenceManager pm = pmf.getPersistenceManager();
-		Transaction tx=pm.currentTransaction();
-		try
-		{
-			tx.begin();
-			BigDecimal id = new BigDecimal(nextval());
-			long tuplasInsertadas = sqlReservaHabitacion.adicionarReserva(pm, id ,fechaInicioTimestamp, fechaFinTimestamp, numPersonas, planPago, habitacion, idServicioHab, recepTipoDoc, recepNumDoc);
-			tx.commit();
+	// public long adicionarReserva(Timestamp fechaInicioTimestamp, Timestamp fechaFinTimestamp, BigDecimal numPersonas, String planPago, BigDecimal habitacion, BigDecimal idServicioHab, String recepTipoDoc, String recepNumDoc)
+	// {
+	// 	PersistenceManager pm = pmf.getPersistenceManager();
+	// 	Transaction tx=pm.currentTransaction();
+	// 	try
+	// 	{
+	// 		tx.begin();
+	// 		long reservaHabitacion = sqlReservaHabitacion.adicionarReserva(pm,fechaInicioTimestamp, fechaFinTimestamp, numPersonas, planPago, habitacion, idServicioHab, recepTipoDoc, recepNumDoc);
+	// 		tx.commit();
 			
-			log.trace("Inserción de Reserva: " + fechaInicioTimestamp + ": " + tuplasInsertadas + " tuplas insertadas");
+	// 		log.trace("Inserción de Reserva: " + fechaInicioTimestamp + ": " + "1" + " tuplas insertadas");
+			
+	// 		return reservaHabitacion;
 
-			return new ReservaHabitacion(id,fechaInicioTimestamp, fechaFinTimestamp, numPersonas, planPago, habitacion, idServicioHab, recepTipoDoc, recepNumDoc);
-		}
-		catch (Exception e)
-		{
-			//        	e.printStackTrace();
-			log.error ("Exception : " + e.getMessage() + "\n" + darDetalleException(e));
-			return null;
-		}
-		finally
-		{
-			if (tx.isActive())
-			{
-				tx.rollback();
-			}
-			pm.close();
-		}	
-	}
+	// 	}
+	// 	catch (Exception e)
+	// 	{
+	// 		//        	e.printStackTrace();
+	// 		log.error ("Exception : " + e.getMessage() + "\n" + darDetalleException(e));
+	// 		return 0;
+	// 	}
+	// 	finally
+	// 	{
+	// 		if (tx.isActive())
+	// 		{
+	// 			tx.rollback();
+	// 		}
+	// 		pm.close();
+	// 	}	
+	// }
 
 	public Cuenta adicionarCuenta()
 	{
@@ -455,8 +538,7 @@ public class PersistenciaHotelAndes
 			tx.commit();
 			
 			log.trace("Inserción de CuentaReserva: " + idReserva + ": " + tuplasInsertadas + " tuplas insertadas");
-
-			return new ReservaHabitacion(idReserva, null, null, null, null, null, null, null, null);
+			return new ReservaHabitacion(idReserva, null, null, null, null, null, null, null, null, null);
 		}
 		catch (Exception e)
 		{
@@ -474,6 +556,37 @@ public class PersistenciaHotelAndes
 		}	
 	}
 
+    public ReservaCliente asociarClienteReserva(String tipo_doc, String num_doc, BigDecimal id_reserva)
+	{
+		
+		PersistenceManager pm = pmf.getPersistenceManager();
+		Transaction tx=pm.currentTransaction();
+		try
+		{
+			tx.begin();
+			long tuplasInsertadas = sqlReservaCliente.asociarClienteReserva(pm, tipo_doc, num_doc, id_reserva);
+			tx.commit();
+			
+			log.trace("Inserción de ReservaCliente: " + tipo_doc + ": " + tuplasInsertadas + " tuplas insertadas");
+
+			return new ReservaCliente(tipo_doc, num_doc, id_reserva);
+		}
+		catch (Exception e)
+		{
+			//        	e.printStackTrace();
+			log.error ("Exception : " + e.getMessage() + "\n" + darDetalleException(e));
+			return null;
+		}
+		finally
+		{
+			if (tx.isActive())
+			{
+				tx.rollback();
+			}
+			pm.close();
+		}		
+	}
+
 	/*****************************************
 	 * METODOS PARA MANEJAR LA DISPONIBILIDAD DE HABITACIONES
 	 ******************************************************/
@@ -483,5 +596,11 @@ public class PersistenciaHotelAndes
 	{
 		return sqlDisponibilidadHabitaciones.darDisponibilidadHabitaciones(pmf.getPersistenceManager(), tipoHabitacion, fechaInicio);
 	}
+    
+    /******************************************
+     * METODOS PARA MANEJAR TRANSACCIONALMENTE LA RESERVA DE SERVICIOS PARA CONVENCIONES 
+     ******************************************/
+    
+    
     
 }

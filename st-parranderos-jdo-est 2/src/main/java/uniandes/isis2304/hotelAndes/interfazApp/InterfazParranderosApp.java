@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.jdo.JDODataStoreException;
@@ -48,17 +50,21 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.stream.JsonReader;
 
+import uniandes.isis2304.hotelAndes.negocio.ClienteEmail;
+import uniandes.isis2304.hotelAndes.negocio.ClienteGeneral;
 import uniandes.isis2304.hotelAndes.negocio.DisponibilidadHabitaciones;
 import uniandes.isis2304.hotelAndes.negocio.HotelAndes;
+import uniandes.isis2304.hotelAndes.negocio.ReservaHabitacion;
 import uniandes.isis2304.hotelAndes.negocio.VOClienteEmail;
 import uniandes.isis2304.hotelAndes.negocio.VOClienteGeneral;
 import uniandes.isis2304.hotelAndes.negocio.VOCuenta;
 import uniandes.isis2304.hotelAndes.negocio.VODisponibilidadHabitaciones;
+import uniandes.isis2304.hotelAndes.negocio.VOReservaCliente;
 import uniandes.isis2304.hotelAndes.negocio.VOReservaHabitacion;
 
 /**
  * Clase principal de la interfaz
- * @author Germán Bravo
+ * @author 
  */
 @SuppressWarnings("serial")
 
@@ -242,7 +248,134 @@ public class InterfazParranderosApp extends JFrame implements ActionListener
         }        
         setJMenuBar ( menuBar );	
     }
-     
+    
+    /****************************************************************
+     * 			RF 12-I3: RESERVAR SERVICIOS PARA UNA CONVENCION 
+     ****************************************************************/
+    
+    public void reservarServiciosConvencion() {
+    	
+    	try
+    	{
+    		HashMap<Integer, Integer> listaHabit = solicitarTiposHabitaciones();
+			BigDecimal numPersonas = new BigDecimal( Integer.parseInt(JOptionPane.showInputDialog("Ingrese el número de asistentes de la convención: ")));
+			Timestamp fechaInicio = solicitarFecha("inicio");
+			Timestamp fechaFin = solicitarFecha("fin");
+			String cedRepLeg = JOptionPane.showInputDialog("Ingrese la cedula del Representante Legal de la Convención: ").trim();
+			String nombreRepLeg = JOptionPane.showInputDialog("Ingrese el nombre del representante legal: ").trim();
+			String emailRepLeg = JOptionPane.showInputDialog("Ingrese el email del representante legal: ").trim();
+
+
+			//Crear el cliente
+			ClienteGeneral clienteGeneral = new ClienteGeneral("CC", cedRepLeg, nombreRepLeg);
+			ClienteEmail clienteEmail = new ClienteEmail("CC", cedRepLeg, emailRepLeg);
+			
+			//Crear una lista de objetos de tipo ReservaHabitacion con cada una de las reservas de habitacion que
+			//se realizaran 
+			
+    		System.out.println(listaHabit);
+			
+			//Check if for all the key values of listaHabit, dispHabitacion returns true
+
+			for (Integer key : listaHabit.keySet()) {
+				if (!dispHabitacion(key, fechaInicio ,listaHabit.get(key))) {
+					throw new Exception("Habitaciones no disponibles");
+				}
+			}
+			
+			
+			//Crear las reservas que se van a generar en el sistema
+			ArrayList<ReservaHabitacion> reservas = reservarHabitaciones(listaHabit, fechaInicio, fechaFin);
+			
+			//Reservar las habitaciones a nombre del cliente
+			
+			reservarConvencion(reservas, clienteGeneral, clienteEmail);
+
+    		
+    	} catch (Exception e)
+    	{
+			String resultado = generarMensajeError(e);
+			panelDatos.actualizarInterfaz(resultado);
+			
+			
+    	}
+    }
+    
+    
+    private HashMap<Integer, Integer> solicitarTiposHabitaciones()
+    {
+    	HashMap<Integer, Integer> answ = new HashMap<>();
+
+    	String[] options = {"1.Simple", "2.Doble", "3.Triple", "4.Cuadruple","5.Suite","6.Suite Premium", "7.Suite Luxury", "8.Suite Superior", "9.Suite Superior Luxury", "10.Suite Superior Premium"};
+    	
+    	for (int i = 0; i < options.length; i++)
+    	{
+
+			int total = Integer.parseInt(JOptionPane.showInputDialog("Ingrese el número de habitaciones de tipo " + options[i] + " que necesita").trim());
+    		answ.put(i + 1, total);
+    	}
+
+    	return answ;
+    }
+    
+    private Boolean dispHabitacion(Integer tip, Timestamp fechaIni, Integer capacidad)
+    {
+		return hotelAndes.darVODisponibilidadHabitaciones(tip, fechaIni).size() > capacidad;
+    }
+	
+	private Timestamp solicitarFecha(String tipo)
+	{
+		String fecha = JOptionPane.showInputDialog("Ingrese la fecha de " + tipo + " de la convención (aaaa-mm-dd)").trim();
+		
+		//Convert to timestamp
+
+		return Timestamp.valueOf(fecha + " 12:00:00");
+
+	}
+    
+	private ArrayList<ReservaHabitacion> reservarHabitaciones(HashMap<Integer, Integer> listaHabit, Timestamp fechaInicio, Timestamp fechaFin)
+	{
+		ArrayList<ReservaHabitacion> reservas = new ArrayList<ReservaHabitacion>();
+
+		for (Integer key : listaHabit.keySet()) {
+
+			for (int i = 0; i < listaHabit.get(key); i++) {
+
+				BigDecimal numHabit = hotelAndes.darVODisponibilidadHabitaciones(key, fechaInicio).get(i).getNumeroHabitacion();
+				BigDecimal idServicio = hotelAndes.darVODisponibilidadHabitaciones(key, fechaInicio).get(i).getIdServicioTipo();
+
+				ReservaHabitacion reserva = new ReservaHabitacion(
+					new BigDecimal(-1),
+					fechaInicio,
+					fechaFin,
+					new BigDecimal(1),
+					"Preferencial",
+					numHabit,
+					idServicio,
+					"CC",
+					"1234567891",
+					null
+				);
+				reservas.add(reserva);
+
+			}
+		}
+
+		return reservas;
+	}
+	
+	private void reservarConvencion(ArrayList<ReservaHabitacion> reservas, ClienteGeneral clienteGeneral, ClienteEmail clienteEmail)
+	{
+
+		try {
+			hotelAndes.reservarConvencion(reservas, clienteGeneral, clienteEmail);
+			
+		} catch (Exception e) {
+			String resultado = generarMensajeError(e);
+			panelDatos.actualizarInterfaz(resultado);
+		}
+
+	}
 	/* ****************************************************************
 	 * 			RF 7: REGISTRAR UNA RESERVA POR PARTE DE UN CLIENTE
 	 *****************************************************************/
@@ -252,91 +385,149 @@ public class InterfazParranderosApp extends JFrame implements ActionListener
 	
 	public void registrarReservaAlojamiento()
 	{
+		ArrayList<VOClienteGeneral> clientes = new ArrayList<>();
 		try {
-			String nombreCliente = JOptionPane.showInputDialog("Ingrese el nombre del cliente");
-
-			Object[] options = {"CC", "TI"};
-			Object selectionObject = JOptionPane.showInputDialog(null, "Seleccione el tipo de documento", "Menu", JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
-			String tipoDocumento = selectionObject.toString();
-
-			String numeroDocumento = JOptionPane.showInputDialog("Ingrese el numero de documento");
-		
-			String email = JOptionPane.showInputDialog("Ingrese el email");
-
-			String fechaInicio = JOptionPane.showInputDialog("Ingrese la fecha de inicio de la reserva (ej: 2022-07-03)");
-
-			String fechaFin = JOptionPane.showInputDialog("Ingrese la fecha de fin de la reserva (ej: 2022-07-20)");
-			Timestamp fechaInicioTimestamp = Timestamp.valueOf(fechaInicio + " 00:00:00");
-			Timestamp fechaFinTimestamp = Timestamp.valueOf(fechaFin + " 00:00:00");
-
-			Object[] options2 = {"1.Simple", "2.Doble", "3.Triple", "4.Cuadruple","5.Suite","6.Suite Premium", "7.Suite Luxury", "8.Suite Superior", "9.Suite Superior Luxury", "10.Suite Superior Premium"};
-			Object selectionObject2 = JOptionPane.showInputDialog(null, "Seleccione el tipo de habitacion", "Menu", JOptionPane.PLAIN_MESSAGE, null, options2, options2[0]);
-			char tipoHabitacion = selectionObject2.toString().charAt(0);
-			int tipHabitacion = tipoHabitacion - 48;
-
-			String cantPersonas = JOptionPane.showInputDialog("Ingrese la cantidad de personas");
-			int cantPersonasInt = Integer.parseInt(cantPersonas);
-
-			System.out.println(tipHabitacion);
-			
-			if(nombreCliente != null && tipoDocumento != null && numeroDocumento != null && email != null && fechaInicio != null && fechaFin != null && cantPersonas != null) {
-				if (cantPersonasInt < 0 && (tipHabitacion < 1 || tipHabitacion > 10))
-				{
-					throw new Exception("La cantidad de personas debe ser mayor a 0 o la habitacion no fue valida");
-				}				
-				else
-				{
-					//Adicionar un cliente a la base de datos	
-					VOClienteGeneral tb = hotelAndes.adicionarClienteGeneral(nombreCliente, tipoDocumento, numeroDocumento, email);
-					VOClienteEmail tb2 = hotelAndes.adicionarClienteEmail(tipoDocumento, numeroDocumento, email);
-					if(tb == null || tb2 == null) {
-						throw new Exception("El cliente no se pudo crear en la base de datos ");
-					}
-					String resultado = "Se pudo crear al cliente " + tb;
-					resultado += "\nSe pudo crear al cliente " + tb2;
-					panelDatos.actualizarInterfaz(resultado);
-					//Validar disponibilidad habitaciones	
-					List <VODisponibilidadHabitaciones> disponibilidad = hotelAndes.darVODisponibilidadHabitaciones(tipHabitacion, fechaInicioTimestamp);
-					if (disponibilidad.size() == 0)
-					{
-						throw new Exception("No hay disponibilidad para el tipo de habitacion seleccionado");
-					}
-
-					String result2 = "Hay disponibilidad para las siguientes habitaciones" + disponibilidad;
-					panelDatos.actualizarInterfaz(result2);
-					BigDecimal habitacion = hotelAndes.darDisponibilidadHabitaciones(tipHabitacion, fechaInicioTimestamp);
-					panelDatos.actualizarInterfaz("Se asignó la habitación" + habitacion);	
-
-					//Agregar la reserva a la base de datos
-					BigDecimal numPersonas = new BigDecimal(cantPersonasInt);
-					String planPago = "Preferencial";
-					BigDecimal idServicioHab = new BigDecimal(tipHabitacion);
-					String recepTipoDoc = "CC";
-					String recepNumDoc = "1234567891";
-					
-					VOReservaHabitacion reserva = hotelAndes.adicionarReserva(fechaInicioTimestamp, fechaFinTimestamp, numPersonas, planPago, habitacion,idServicioHab, recepTipoDoc, recepNumDoc);
-					
-					if(reserva == null)
-					{
-						throw new Exception("La reserva no se pudo crear en la base de datos");
-					}
-					
-					String result3 = "Se pudo crear la reserva " + reserva;
-					panelDatos.actualizarInterfaz(result3);
-
-				}
+			int cantPersonas = Integer.parseInt(JOptionPane.showInputDialog("Ingrese el numero de clientes que van a asociar a la reserva").trim());
+			if(cantPersonas <= 0)
+			{
+				throw new Exception("Se ingresó un número invalido de personas");
 			}
-			else{
-				throw new Exception("No se ingresaron todos los datos");
+			for(int i = 0; i < cantPersonas ; i++)
+			{
+				VOClienteGeneral cliente = crearCliente(i);
+				clientes.add(cliente);
+			}
+			
+			BigDecimal numPersonas = new BigDecimal(cantPersonas);
+			VOReservaHabitacion reserva = asignarHabitacion(numPersonas);
+			BigDecimal reserva_id = reserva.getId();
+
+			for(VOClienteGeneral cliente: clientes)
+			{
+				String cliente_id = cliente.getNumeroDocumento();
+				String tipo_documento = cliente.getTipoDocumento();
+				asociarClienteReserva(tipo_documento, cliente_id , reserva_id);
 			}
 			
 		} catch (Exception e) {
 
 			String resultado = generarMensajeError(e);
 			panelDatos.actualizarInterfaz(resultado);
-
 		}
 	} 
+	
+	private VOClienteGeneral crearCliente(int i)
+	{
+		i++;
+		String nombreCliente = JOptionPane.showInputDialog("Ingrese el nombre del cliente número: " + i);
+		Object[] options = {"CC", "TI"};
+		Object selectionObject = JOptionPane.showInputDialog(null, "Seleccione el tipo de documento del cliente número: " + i , "Menu", JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+		String tipoDocumento = selectionObject.toString();
+		String numeroDocumento = JOptionPane.showInputDialog("Ingrese el numero de documento del cliente número: " + i);
+		String email = JOptionPane.showInputDialog("Ingrese el email del cliente número: " + i);
+		VOClienteGeneral cliente = new ClienteGeneral();
+		try
+		{
+			//Verificar que el usuario no canceló la operación:
+			if(nombreCliente == null || tipoDocumento == null || numeroDocumento == null || email == null)
+			{
+				throw new Exception("El usuario canceló la operación de reserva");
+			}
+			//Adicionar un cliente a la base de datos	
+			cliente = hotelAndes.adicionarClienteGeneral(nombreCliente, tipoDocumento, numeroDocumento, email);
+			VOClienteEmail tb2 = hotelAndes.adicionarClienteEmail(tipoDocumento, numeroDocumento, email);
+			if(cliente == null || tb2 == null) {
+				throw new Exception("El cliente no se pudo crear en la base de datos ");
+			}
+			String resultado = "Se pudo crear al cliente " + cliente;
+			resultado += "\nSe pudo crear al cliente " + tb2;
+			panelDatos.actualizarInterfaz(resultado);
+
+		}
+		catch(Exception e)
+		{
+			String resultado = generarMensajeError(e);
+			panelDatos.actualizarInterfaz(resultado);
+			
+		}
+		return cliente;
+	}
+	
+	private VOReservaHabitacion asignarHabitacion(BigDecimal numPersonas) throws Exception
+	{
+		String fechaInicio = JOptionPane.showInputDialog("Ingrese la fecha de inicio de la reserva (ej: 2022-07-03)");
+		String fechaFin = JOptionPane.showInputDialog("Ingrese la fecha de fin de la reserva (ej: 2022-07-20)");
+		Timestamp fechaInicioTimestamp = Timestamp.valueOf(fechaInicio + " 00:00:00");
+		Timestamp fechaFinTimestamp = Timestamp.valueOf(fechaFin + " 00:00:00");
+		Object[] options2 = {"1.Simple", "2.Doble", "3.Triple", "4.Cuadruple","5.Suite","6.Suite Premium", "7.Suite Luxury", "8.Suite Superior", "9.Suite Superior Luxury", "10.Suite Superior Premium"};
+		Object selectionObject2 = JOptionPane.showInputDialog(null, "Seleccione el tipo de habitacion", "Menu", JOptionPane.PLAIN_MESSAGE, null, options2, options2[0]);
+		char tipoHabitacion = selectionObject2.toString().charAt(0);
+		int tipHabitacion = tipoHabitacion - 48;
+		VOReservaHabitacion reserva = new ReservaHabitacion();
+
+		if (tipHabitacion < 1 || tipHabitacion > 10)
+		{
+			throw new Exception("La cantidad de personas debe ser mayor a 0 o la habitacion no fue valida");
+		}				
+		else if (fechaInicio == null || fechaFin == null)
+		{
+			throw new Exception("No se seleccionó una fecha ");
+		}
+		else if (fechaInicioTimestamp.compareTo(fechaFinTimestamp) > 0)
+		{
+			throw new Exception("La fecha de salida es inferior a la fecha de entrada");
+		}
+		else
+		{
+			List <VODisponibilidadHabitaciones> disponibilidad = hotelAndes.darVODisponibilidadHabitaciones(tipHabitacion, fechaInicioTimestamp);
+			if (disponibilidad.size() == 0)
+			{
+				throw new Exception("No hay disponibilidad para el tipo de habitacion seleccionado");
+			}
+
+			String result2 = "Hay disponibilidad para las siguientes habitaciones" + disponibilidad;
+			panelDatos.actualizarInterfaz(result2);
+			BigDecimal habitacion = hotelAndes.darDisponibilidadHabitaciones(tipHabitacion, fechaInicioTimestamp);
+			panelDatos.actualizarInterfaz("Se asignó la habitación" + habitacion);	
+
+			//Agregar la reserva a la base de datos
+			String planPago = "Preferencial";
+			BigDecimal idServicioHab = new BigDecimal(tipHabitacion);
+			String recepTipoDoc = "CC";
+			String recepNumDoc = "1234567891";
+					
+			//reserva = hotelAndes.adicionarReserva(fechaInicioTimestamp, fechaFinTimestamp, numPersonas, planPago, habitacion,idServicioHab, recepTipoDoc, recepNumDoc);
+			reserva = null;		
+			if(reserva == null)
+			{
+				throw new Exception("La reserva no se pudo crear en la base de datos");
+			}
+					String result3 = "Se pudo crear la reserva " + reserva;
+					panelDatos.actualizarInterfaz(result3);
+
+			}
+		
+		return reserva;
+
+	}
+	
+	private void asociarClienteReserva(String tipo_doc, String num_doc, BigDecimal id_reserva)
+	{
+			try {
+				
+				VOReservaCliente reservaCliente = hotelAndes.asociarClienteReserva(tipo_doc, num_doc, id_reserva);
+				if (reservaCliente == null)
+				{
+					throw new Exception("No se pudo asociar el cliente a la reserva");
+				}
+				String respuesta = "Se asoció el cliente a la reserva " + reservaCliente;
+				panelDatos.actualizarInterfaz(respuesta);
+
+			} catch (Exception e) {
+				String resultado = generarMensajeError(e);
+				panelDatos.actualizarInterfaz(resultado);	
+			}	
+	}
 	
 	/*****************************************************
 	 * 			RF9: REGISTRAR LA LLEGADA DE UN CLIENTE AL HOTEL
@@ -384,7 +575,7 @@ public class InterfazParranderosApp extends JFrame implements ActionListener
 	 */
 	public void mostrarLogParranderos ()
 	{
-		mostrarArchivo ("hotelAndes.log");
+		mostrarArchivo ("parranderos.log");
 	}
 	
 	/**
@@ -402,7 +593,7 @@ public class InterfazParranderosApp extends JFrame implements ActionListener
 	public void limpiarLogParranderos ()
 	{
 		// Ejecución de la operación y recolección de los resultados
-		boolean resp = limpiarArchivo ("hotelAndes.log");
+		boolean resp = limpiarArchivo ("parranderos.log");
 
 		// Generación de la cadena de caracteres con la traza de la ejecución de la demo
 		String resultado = "\n\n************ Limpiando el log de hotelAndes ************ \n";
@@ -559,7 +750,7 @@ public class InterfazParranderosApp extends JFrame implements ActionListener
 	{
 		String resultado = "************ Error en la ejecución\n";
 		resultado += e.getLocalizedMessage() + ", " + darDetalleException(e);
-		resultado += "\n\nRevise datanucleus.log y hotelAndes.log para más detalles";
+		resultado += "\n\nRevise datanucleus.log y parranderos.log para más detalles";
 		return resultado;
 	}
 
